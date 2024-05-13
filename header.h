@@ -90,6 +90,7 @@ void drawMaze(RenderWindow &window)
 			}
 		}
 	}
+    //cout<<mazeLayout[8][21];
 }
 
 class Score
@@ -474,7 +475,8 @@ public:
 			if(y==10 && x==11)
 				flag=true;
 			cout<<"x = "<<x<<" , y= "<<y<<endl;
-			if (mazeLayout[x][y] == 1 && flag==false)
+            cout <<mazeLayout[x][y]<<endl;
+			if (mazeLayout[y][x] == 1 && flag==false)
 			{
 
 				float xPos = CELL_SIZE * x + CELL_SIZE / 2 - sprite.getGlobalBounds().width / 2;
