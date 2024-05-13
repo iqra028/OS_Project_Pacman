@@ -225,47 +225,47 @@ public:
 		window.draw(sprite);
 	}
 
-	void Path()
-	{
-		// Add delay before moving
-		if (clock.getElapsedTime().asSeconds() < delay)
-		{
-			return; // Skip movement if delay hasn't elapsed yet
-		}
+	// void Path()
+	// {
+	// 	// Add delay before moving
+	// 	if (clock.getElapsedTime().asSeconds() < delay)
+	// 	{
+	// 		return; // Skip movement if delay hasn't elapsed yet
+	// 	}
 
-		if (clock.getElapsedTime().asSeconds() >= moveInterval + delay)
-		{
+	// 	if (clock.getElapsedTime().asSeconds() >= moveInterval + delay)
+	// 	{
 
-			if ((x == 11 && y == 11) || (x == 11 && y == 10))
-			{
-				y--;
-			}
-			else if(y==11 ){
-				if(x==9)
-				x++;
-				else if(x==10)
-				x++;
-			}
-			else
-			{
-				if (x == 7)
-					left = false;
-				if (x == 15 && y == 9)
-				{
-					left = true;
-				}
-				if (left)
-				{
-					x--;
-				}
-				else if (!left)
-					x++;
-			}
+	// 		if ((x == 11 && y == 11) || (x == 11 && y == 10))
+	// 		{
+	// 			y--;
+	// 		}
+	// 		else if(y==11 ){
+	// 			if(x==9)
+	// 			x++;
+	// 			else if(x==10)
+	// 			x++;
+	// 		}
+	// 		else
+	// 		{
+	// 			if (x == 7)
+	// 				left = false;
+	// 			if (x == 15 && y == 9)
+	// 			{
+	// 				left = true;
+	// 			}
+	// 			if (left)
+	// 			{
+	// 				x--;
+	// 			}
+	// 			else if (!left)
+	// 				x++;
+	// 		}
 
-			updatePosition();
-			clock.restart();
-		}
-	}
+	// 		updatePosition();
+	// 		clock.restart();
+	// 	}
+	// }
 	vector<vector<int>> bfs(int PacmanX, int PacmanY) {
     vector<vector<int>> directions = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
     vector<vector<bool>> visited(HEIGHT, vector<bool>(WIDTH, false));
