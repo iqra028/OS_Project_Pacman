@@ -6,6 +6,9 @@
 #include <semaphore.h>
 #include <mutex>
 #include <unistd.h>
+sem_t reader;
+sem_t writer;
+int readercount=0;
 #include "header.h"
 const int total = 4;
 sem_t keys;
@@ -23,7 +26,8 @@ struct arguments
 {
 	// Food food;
 	Pacman *pacman;
-	arguments(Pacman *pac) : pacman(pac)
+	Dots * Dot;
+	arguments(Pacman *pac,Dots * dot) : pacman(pac),Dot(dot)
 	{
 	}
 };
@@ -34,9 +38,10 @@ void *userInterfaceThread(void *args)
 	// Score score;
 
 	// cout<<arg->pacman->x<<" "<<arg->pacman->y<<endl;
-	while (running)
+	while (true)
 	{
 		// arg->pacman->handleEvent(arg->event);
+		arg->Dot->collisionDots(arg->pacman);
 	}
 	return nullptr;
 }
@@ -71,7 +76,7 @@ void DP(ghost_arg *arg)
 
 		//sleep(10); // Simulate eating time
 		while (arg->pacman->GhostCollision(arg->ghost))
-        {
+        {	
 			arg->ghost->moveGhost(arg->pacman->x,arg->pacman->y);
         }
 
@@ -109,6 +114,7 @@ void *ghostControllerThread(void *args)
 				//arg->ghost->Path();
 		//}
 		lock1.unlock();
+
 		DP(arg);
 	}
 
@@ -134,7 +140,7 @@ void *gameEngineThread(void *args)
 	Event event;
 	bool pressed = false;
 	// cout<<pacman.x<<" "<<pacman.y<<endl;
-	arguments *args1 = new arguments(&pacman);
+	arguments *args1 = new arguments(&pacman,&Dot);
 
 	pthread_create(&t[0], nullptr, userInterfaceThread, &args1);
 	int n[total];
@@ -214,7 +220,7 @@ void *gameEngineThread(void *args)
 		}
 
 		// Check for power pellets
-		bool erased = Dot.collisionDots();
+		
 
 		// Draw Dots
 		Dot.draw(window);
@@ -241,7 +247,8 @@ int main()
 	pthread_create(&t, nullptr, gameEngineThread, nullptr);
 	sem_init(&keys, 0, 2);	  // Initialize the keys semaphore with 2 keys
 	sem_init(&permits, 0, 2); // Initialize the permits semaphore with 2 permits
-
+	sem_init(&reader, 0, 1);	  // Initialize the keys semaphore with 2 keys
+	sem_init(&writer, 0, 1); // Initialize the permits
 	pthread_join(t, nullptr);
 
 	sem_destroy(&keys);

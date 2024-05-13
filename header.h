@@ -10,7 +10,7 @@ const int HEIGHT = 23;
 const int CELL_SIZE = 35; // Size of each cell in pixels
 const int topSpace = 2;
 const int bottomSpace = 2;
-const int mazeLayout[HEIGHT][WIDTH] = {
+int mazeLayout[HEIGHT][WIDTH] = {
 	{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
 	{0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0},
 	{0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0},
@@ -47,11 +47,11 @@ void drawMaze(RenderWindow &window)
 		for (int j = 0; j < WIDTH; ++j)
 		{
 			cell.setPosition(j * CELL_SIZE, (i + topSpace) * CELL_SIZE);
-			if (mazeLayout[i][j] == 1)
+			if (mazeLayout[i][j] !=0)
 			{
 				cell.setFillColor(sf::Color::Black); // Wall
 				window.draw(cell);
-				if (j > 0 && mazeLayout[i][j - 1] == 0)
+				if (j > 0 && mazeLayout[i][j - 1] ==0)
 				{
 					// Draw left outline
 					sf::Vertex leftOutline[] = {
@@ -59,7 +59,7 @@ void drawMaze(RenderWindow &window)
 						sf::Vertex(sf::Vector2f(j * CELL_SIZE, ((i + topSpace) + 1) * CELL_SIZE), sf::Color::Blue)};
 					window.draw(leftOutline, 2, sf::Lines);
 				}
-				if (j < (WIDTH - 1) && mazeLayout[i][j + 1] == 0)
+				if (j < (WIDTH - 1) && mazeLayout[i][j + 1] ==0)
 				{
 					// Draw right outline
 					sf::Vertex rightOutline[] = {
@@ -67,7 +67,7 @@ void drawMaze(RenderWindow &window)
 						sf::Vertex(sf::Vector2f((j + 1) * CELL_SIZE, ((i + topSpace) + 1) * CELL_SIZE), sf::Color::Blue)};
 					window.draw(rightOutline, 2, sf::Lines);
 				}
-				if (i > 0 && mazeLayout[i - 1][j] == 0)
+				if (i > 0 && mazeLayout[i - 1][j] ==0)
 				{
 					// Draw top outline
 					sf::Vertex topOutline[] = {
@@ -75,7 +75,7 @@ void drawMaze(RenderWindow &window)
 						sf::Vertex(sf::Vector2f((j + 1) * CELL_SIZE, (i + topSpace) * CELL_SIZE), sf::Color::Blue)};
 					window.draw(topOutline, 2, sf::Lines);
 				}
-				if (i < (HEIGHT - 1) && mazeLayout[i + 1][j] == 0)
+				if (i < (HEIGHT - 1) && mazeLayout[i + 1][j] ==0)
 				{
 					// Draw bottom outline
 					sf::Vertex bottomOutline[] = {
@@ -296,10 +296,25 @@ public:
         for (int i = 0; i < directions.size(); ++i) {
             int newX = curX + directions[i][0];
             int newY = curY + directions[i][1];
-            if (newX >= 0 && newX < WIDTH && newY >= 0 && newY < HEIGHT && !visited[newY][newX]&& mazeLayout[newY][newX] != 0) {
-                q.push({newX, newY});
-                visited[newY][newX] = true;
-                parent[newY][newX] = {curX, curY};
+			
+            if (newX >= 0 && newX < WIDTH && newY >= 0 && newY < HEIGHT && !visited[newY][newX]) {
+				sem_wait(&reader);
+    			readercount++;
+    			if (readercount == 1)
+        			sem_wait(&writer);
+    			sem_post(&reader);
+    			std::cout << readercount << " reader is inside" << std::endl;
+				if(mazeLayout[newY][newX] != 0){
+                	q.push({newX, newY});
+                	visited[newY][newX] = true;
+                	parent[newY][newX] = {curX, curY};
+				}
+				sem_wait(&reader);
+    			readercount--;
+    			if (readercount == 0) {
+        			sem_post(&writer);
+   	 			}
+    			sem_post(&reader);
             }
         }
     }
@@ -310,6 +325,7 @@ void moveGhost(int PacmanX, int PacmanY) {
     vector<vector<int>> path;
     if (x != PacmanX || y != PacmanY) {
         path = bfs(PacmanX, PacmanY);
+	 std::cout << readercount + 1 << " Reader is leaving" << std::endl;
     }
     if (path.empty()) {
         return;
@@ -639,18 +655,24 @@ public:
 			}
 		}
 	}
-	bool collisionDots()
+	bool collisionDots(Pacman * pacman)
 	{
 		for (int i = 0; i < WIDTH; i++)
 		{
 			for (int j = 0; j < HEIGHT; j++)
 			{
-				if (pacman.x == j && pacman.y == i)
+				if (pacman->x == j && pacman->y == i)
 				{
 					if (dots[i][j] == 1)
 					{
 						score.update(1);
 						dots[i][j] = 0;
+						 std::cout << "Writer is trying to enter" << std::endl;
+						sem_wait(&writer);
+						mazeLayout[i][j]=2;
+						std::cout << "Writer has entered" << std::endl;
+						sem_post(&writer);
+						 std::cout << "Writer is leaving" << std::endl;
 						// Find and erase the corresponding sprite
 						for (auto it = sprites.begin(); it != sprites.end(); ++it)
 						{
@@ -661,8 +683,8 @@ public:
 							if (spriteX == j && spriteY == i + topSpace)
 							{
 								it = sprites.erase(it);
-								pacman.isTransitioning = true;
-								pacman.transitionClock.restart();
+								pacman->isTransitioning = true;
+								pacman->transitionClock.restart();
 								return true;
 							}
 						}
