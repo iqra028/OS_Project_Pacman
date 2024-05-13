@@ -128,10 +128,10 @@ void *gameEngineThread(void *args)
 	Pacman pacman;
 	RenderWindow window(sf::VideoMode(WIDTH * CELL_SIZE, (HEIGHT + bottomSpace + topSpace) * CELL_SIZE), "Pac-Man Maze");
 	Ghost ghosts[4] = {
-		Ghost("pacman-art/ghosts/blinky.png", 0.0f, 1), // No delay
-		Ghost("pacman-art/ghosts/clyde.png", 0.5f, 2),	// Delay of 0.5 seconds
-		Ghost("pacman-art/ghosts/inky.png", 1.0f, 3),	// Delay of 1 second
-		Ghost("pacman-art/ghosts/pinky.png", 1.5f, 4)	// Delay of 1.5 seconds
+		Ghost("pacman-art/ghosts/blinky.png", 0.0f, 1,0.3), // No delay
+		Ghost("pacman-art/ghosts/clyde.png", 0.5f, 2,0.4),	// Delay of 0.5 seconds
+		Ghost("pacman-art/ghosts/inky.png", 1.0f, 3,0.5),	// Delay of 1 second
+		Ghost("pacman-art/ghosts/pinky.png", 1.5f, 4,0.6)	// Delay of 1.5 seconds
 	};
 	Food food(score);
 

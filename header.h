@@ -153,8 +153,9 @@ public:
 	bool dead;
 	string OrigSprite;
 	bool isBlue;
+	float speed=0.3;
 
-	Ghost(string path, float delay,int ghostnum) : delay(delay),ghostnum(ghostnum)
+	Ghost(string path, float delay,int ghostnum,float s) : delay(delay),ghostnum(ghostnum),speed(s)
 	{ // Constructor updated to accept delay
 		OrigSprite =path;
 		hasKey=hasPermit=isBlue=false;
@@ -330,7 +331,7 @@ void moveGhost(int PacmanX, int PacmanY) {
     if (path.empty()) {
         return;
     }
-	float speed=0.3;
+	
     int nextX = path[1][0];
     int nextY = path[1][1];
     if (clock.getElapsedTime().asSeconds() > speed) {
