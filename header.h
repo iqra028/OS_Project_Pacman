@@ -1,6 +1,7 @@
 #include <SFML/Graphics.hpp>
 #include <SFML/System.hpp>
 #include <iostream>
+#include<queue>
 using namespace sf;
 using namespace std;
 
@@ -265,6 +266,63 @@ public:
 			clock.restart();
 		}
 	}
+	vector<vector<int>> bfs(int PacmanX, int PacmanY) {
+    vector<vector<int>> directions = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
+    vector<vector<bool>> visited(HEIGHT, vector<bool>(WIDTH, false));
+    vector<vector<vector<int>>> parent(HEIGHT, vector<vector<int>>(WIDTH, vector<int>(2, -1)));
+    queue<vector<int>> q;
+    q.push({x, y});
+    visited[y][x] = true;
+
+    while (!q.empty()) {
+        vector<int> current = q.front();
+        int curX = current[0];
+        int curY = current[1];
+        q.pop();
+        if (curX == PacmanX && curY == PacmanY) {
+            vector<vector<int>> path;
+            while (curX != x || curY != y) {
+                path.push_back({curX, curY});
+                current = parent[curY][curX];
+                curX = current[0];
+                curY = current[1];
+            }
+            path.push_back({x, y});
+            reverse(path.begin(), path.end());
+
+            return path;
+        }
+        for (int i = 0; i < directions.size(); ++i) {
+            int newX = curX + directions[i][0];
+            int newY = curY + directions[i][1];
+            if (newX >= 0 && newX < WIDTH && newY >= 0 && newY < HEIGHT && !visited[newY][newX]&& mazeLayout[newY][newX] != 0) {
+                q.push({newX, newY});
+                visited[newY][newX] = true;
+                parent[newY][newX] = {curX, curY};
+            }
+        }
+    }
+    return {};
+}
+
+void moveGhost(int PacmanX, int PacmanY) {
+    vector<vector<int>> path;
+    if (x != PacmanX || y != PacmanY) {
+        path = bfs(PacmanX, PacmanY);
+    }
+    if (path.empty()) {
+        return;
+    }
+	float speed=0.3;
+    int nextX = path[1][0];
+    int nextY = path[1][1];
+    if (clock.getElapsedTime().asSeconds() > speed) {
+        x = nextX;
+        y = nextY;
+        updatePosition();
+        clock.restart(); 
+    }
+}
 };
 
 

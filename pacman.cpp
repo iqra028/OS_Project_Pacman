@@ -187,7 +187,7 @@ void *gameEngineThread(void *args)
 		for (int i = 0; i < 4; i++)
 		{
 			if (ghosts[i].hasKey && ghosts[i].hasPermit)
-				ghosts[i].Path();
+				ghosts[i].moveGhost(pacman.x,pacman.y);
 		}
 
 		pacman.GhostCollision(ghosts);
