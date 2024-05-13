@@ -154,7 +154,7 @@ public:
 	string OrigSprite;
 	bool isBlue;
 	float speed=0.3;
-
+	bool stop_moving=0;
 	Ghost(string path, float delay,int ghostnum,float s) : delay(delay),ghostnum(ghostnum),speed(s)
 	{ // Constructor updated to accept delay
 		OrigSprite =path;
@@ -304,7 +304,6 @@ public:
     			if (readercount == 1)
         			sem_wait(&writer);
     			sem_post(&reader);
-    			std::cout << readercount << " reader is inside" << std::endl;
 				if(mazeLayout[newY][newX] != 0){
                 	q.push({newX, newY});
                 	visited[newY][newX] = true;
@@ -324,10 +323,8 @@ public:
 
 void moveGhost(int PacmanX, int PacmanY) {
     vector<vector<int>> path;
-    if (x != PacmanX || y != PacmanY) {
+    if (x != PacmanX || y != PacmanY) 
         path = bfs(PacmanX, PacmanY);
-	 std::cout << readercount + 1 << " Reader is leaving" << std::endl;
-    }
     if (path.empty()) {
         return;
     }
@@ -364,6 +361,7 @@ public:
 	Texture down_transition_1;
 	Texture down_transition_2;
 	string active;
+	
 	sf::Keyboard::Key direction; // Direction of movement
 	bool isTransitioning;
 	sf::Clock transitionClock;
@@ -583,22 +581,122 @@ public:
 			window.draw(sprites[i]);
 		}
 	}
-	void Eat(Pacman &pacman)
+	void Eat(Pacman* pacman)
 	{
 		for (int i = 0; i < 4; i++)
 		{
 
-			if (pacman.x == coord[i][0] && pacman.y == coord[i][1])
+			if (pacman->x == coord[i][0] && pacman->y == coord[i][1])
 			{
 				score.update(10);
-				// cout << "equal" << endl;
-				//  food.sprites.erase(i);
 				sprites[i].setPosition(-500, -500);
 				coord[i][0] = -500;
 				coord[i][1] = -500;
 			}
 		}
 	}
+};
+class PowerPellets
+{
+public:
+    std::vector<sf::CircleShape> circles;
+    int x;
+    int y;
+    int total;
+    int **coord;
+    Score &score;
+	bool respawn=0;
+
+    PowerPellets(Score &score) : score(score)
+    {
+        total = 5;
+        coord = new int *[total];
+        for (int i = 0; i < total; i++)
+        {
+            coord[i] = new int[2];
+        }
+		for(int i=0;i<total;i++)
+		{
+		coord[i][0]=-500;
+		coord[i][1]=-500;
+		}
+
+        sf::CircleShape circle(15); // Radius of the circle
+        circle.setFillColor(sf::Color::Yellow);
+        randomPlacement(circle);
+    }
+
+   void randomPlacement(sf::CircleShape &circle)
+    {
+        int i = 0;
+        while (i < total)
+        {if(coord[i][0]!=-500&&coord[i][1]!=-500)
+			{	i++;
+				continue;
+			}
+            bool flag = false;
+            int x = rand() % (WIDTH - 2) + 1; // Random x coordinate
+            int y = rand() % (HEIGHT - 2) + 1; // Random y coordinate
+
+            // Check for specific conditions where pellets cannot be placed
+            if (y == 11 && x >= 9 && x <= 13)
+            {
+                flag = true;
+            }
+            if (y == 10 && x == 11)
+            {
+                flag = true;
+            }
+
+            if (!flag)
+            {
+                // Calculate position for the circle based on maze cell size
+                float xPos = CELL_SIZE * x + CELL_SIZE / 2 - circle.getRadius();
+                float yPos = CELL_SIZE * (y + topSpace) + CELL_SIZE / 2 - circle.getRadius();
+
+                // Set circle position and store coordinates
+                circle.setPosition(xPos, yPos);
+                coord[i][0] = x;
+                coord[i][1] = y;
+                circles.push_back(circle);
+                i++;
+            }
+        }
+        std::cout << "\narray" << std::endl;
+        for (int i = 0; i < total; i++)
+        {
+            std::cout << coord[i][0] << " " << coord[i][1] << std::endl;
+        }
+    }
+
+    void draw(sf::RenderWindow &window)
+    {
+        for (int i = 0; i < circles.size(); i++)
+        {
+            window.draw(circles[i]);
+        }
+    }
+
+    void Eat(Pacman *pacman)
+    {	//sem_wait(&full_slots);
+		//sem_wait(&mutex1);
+
+        for (int i = 0; i < 4; i++)
+        {
+            if (pacman->x == coord[i][0] && pacman->y == coord[i][1])
+            {
+                score.update(10);
+                circles[i].setPosition(-500, -500);
+                coord[i][0] = -500;
+                coord[i][1] = -500;
+				stop=1;
+				respawn=1;
+            }
+        }
+		//sem_post(&mutex1);
+		//sem_post(&empty_slots);
+
+    }
 };
 
 class Dots
@@ -668,12 +766,12 @@ public:
 					{
 						score.update(1);
 						dots[i][j] = 0;
-						 std::cout << "Writer is trying to enter" << std::endl;
+						
 						sem_wait(&writer);
 						mazeLayout[i][j]=2;
-						std::cout << "Writer has entered" << std::endl;
+						
 						sem_post(&writer);
-						 std::cout << "Writer is leaving" << std::endl;
+						
 						// Find and erase the corresponding sprite
 						for (auto it = sprites.begin(); it != sprites.end(); ++it)
 						{
