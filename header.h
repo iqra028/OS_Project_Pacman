@@ -228,6 +228,7 @@ public:
 	// void Path()
 	// {
 	// 	// Add delay before moving
+	// 	cout<<"Path "<<x<<" "<<y<<endl;
 	// 	if (clock.getElapsedTime().asSeconds() < delay)
 	// 	{
 	// 		return; // Skip movement if delay hasn't elapsed yet
@@ -323,6 +324,7 @@ void moveGhost(int PacmanX, int PacmanY) {
         clock.restart(); 
     }
 }
+
 };
 
 
@@ -465,7 +467,7 @@ public:
 		float yPos = CELL_SIZE * (y + topSpace) + CELL_SIZE / 2 - sprite.getGlobalBounds().height / 2;
 		sprite.setPosition(xPos, yPos);
 	}
-	void GhostCollision(Ghost ghosts[4])
+	bool GhostCollision(Ghost ghosts[4])
 	{
 		for (int i = 0; i < 4; i++)
 		{
@@ -474,6 +476,7 @@ public:
 				x = 1;
 				y = 3;
 				updatePosition();
+				return false;
 			}
 			else if(ghosts[i].isBlue){
 				ghosts[i].x=11;
@@ -482,6 +485,7 @@ public:
 				ghosts[i].hasPermit=false;
 			}
 		}
+		return true;
 	}
 
 	void draw(sf::RenderWindow &window)
@@ -666,6 +670,7 @@ public:
 				}
 			}
 		}
+		return false;
 	}
 
 	void draw(sf::RenderWindow &window)

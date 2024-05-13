@@ -45,21 +45,16 @@ void *userInterfaceThread(void *args)
 struct ghost_arg
 {
 	Ghost *ghost;
+	Pacman* pacman;
 
-	ghost_arg(Ghost *ghost) : ghost(ghost)
+	ghost_arg(Ghost *ghost,Pacman* pacman) : ghost(ghost),pacman(pacman)
 	{
 	}
 };
 
-void eat(Ghost *ghost)
-{
-	lock1.lock();
-	//cout << "Ghost " << ghost->ghostnum << " begins to eat" << endl;
-	lock1.unlock();
-}
 
 // Dining philosopher function
-void DP(Ghost *ghost)
+void DP(ghost_arg *arg)
 {
 	while (running)
 	{
@@ -69,23 +64,26 @@ void DP(Ghost *ghost)
 		sem_wait(&permits);
 
 		lock1.lock();
-		ghost->hasKey = true;
-		ghost->hasPermit = true;
-		//cout << "Ghost " << ghost->ghostnum << " has acquired key and permit, starts eating\n";
+		arg->ghost->hasKey = true;
+		arg->ghost->hasPermit = true;
+		cout << "Ghost " << arg->ghost->ghostnum << " has acquired key and permit, starts eating\n";
 		lock1.unlock();
 
-		eat(ghost);
-		sleep(10); // Simulate eating time
+		//sleep(10); // Simulate eating time
+		while (arg->pacman->GhostCollision(arg->ghost))
+        {
+			arg->ghost->moveGhost(arg->pacman->x,arg->pacman->y);
+        }
 
 		lock1.lock();
-		//cout << "Ghost " << ghost->ghostnum << " has finished eating\n";
+		cout << "Ghost " << arg->ghost->ghostnum << " has finished eating\n";
 		// if (ghost->dead == true)
 		// {
-			ghost->hasKey = false;
-			ghost->hasPermit = false;
+			arg->ghost->hasKey = false;
+			arg->ghost->hasPermit = false;
 			
-			ghost->defaultPos();
-			ghost->updatePosition();
+			arg->ghost->defaultPos();
+			arg->ghost->updatePosition();
 		// }
 		lock1.unlock();
 
@@ -104,7 +102,14 @@ void *ghostControllerThread(void *args)
 
 	while (true)
 	{
-		DP(arg->ghost);
+		lock1.lock();
+		cout<<"helllooo"<<endl;
+		//f (arg->ghost->hasKey && arg->ghost->hasPermit){
+			//cout<<"hi"<<endl;
+				//arg->ghost->Path();
+		//}
+		lock1.unlock();
+		DP(arg);
 	}
 
 	return nullptr;
@@ -135,7 +140,7 @@ void *gameEngineThread(void *args)
 	int n[total];
 	for (int i = 0; i < 4; ++i)
 	{
-		ghost_arg *arg = new ghost_arg(&ghosts[i]);
+		ghost_arg *arg = new ghost_arg(&ghosts[i],&pacman);
 		pthread_create(&t[i], nullptr, ghostControllerThread, arg);
 	}
 	bool makeGhostsBlue = false;
@@ -184,11 +189,11 @@ void *gameEngineThread(void *args)
 
 		pacman.move_in_same_Direction();
 
-		for (int i = 0; i < 4; i++)
-		{
-			if (ghosts[i].hasKey && ghosts[i].hasPermit)
-				ghosts[i].moveGhost(pacman.x,pacman.y);
-		}
+		// for (int i = 0; i < 4; i++)
+		// {
+		// 	if (ghosts[i].hasKey && ghosts[i].hasPermit)
+		// 		ghosts[i].moveGhost(pacman.x,pacman.y);
+		// }
 
 		pacman.GhostCollision(ghosts);
 
