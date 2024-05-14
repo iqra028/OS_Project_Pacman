@@ -504,9 +504,21 @@ public:
 	}
 
 	void draw(sf::RenderWindow &window)
-	{
-		window.draw(sprite);
-	}
+{	
+    // Get the bounding box of the sprite
+    sf::FloatRect spriteBounds = sprite.getGlobalBounds();
+    
+    // Create a rectangle shape to cover the area of the sprite
+    sf::RectangleShape eraser(sf::Vector2f(spriteBounds.width, spriteBounds.height));
+    eraser.setPosition(sprite.getPosition());
+    eraser.setFillColor(sf::Color::Black); // Change to your background color
+    
+    // Erase the area where the sprite was previously drawn
+    window.draw(eraser);
+
+    // Draw the sprite
+    window.draw(sprite);
+}
 };
 
 
@@ -564,6 +576,7 @@ public:
 				sprites.push_back(sprite);
 				i++;
 			}
+			
 		}
 		cout << "\narray" << endl;
 		for (int i = 0; i < total; i++)
@@ -620,25 +633,35 @@ public:
 		coord[i][0]=-500;
 		coord[i][1]=-500;
 		}
-
-        sf::CircleShape circle(15); // Radius of the circle
+		 sf::CircleShape circle(15); 
         circle.setFillColor(sf::Color::Yellow);
-        randomPlacement(circle);
+        
+		for (int i = 0; i < total; i++)
+        {
+            circles.push_back(circle);
+			randomPlacement(circle,i);
+        }
     }
+	void replace(){
 
-   void randomPlacement(sf::CircleShape &circle)
+		//cout<<" i came here for replace ";
+	 //sem_wait(&empty_slots);
+     //sem_wait(&mutex1);
+		for(int i=0;i<total;i++)
+		if(coord[i][0]==-500&&coord[i][1]==-500){
+			randomPlacement(circles[i],i);
+		}
+		// sem_post(&mutex1);
+        //sem_post(&full_slots);
+
+		
+	}
+   void randomPlacement(sf::CircleShape &circle,int i)
     {
-        int i = 0;
-        while (i < total)
-        {if(coord[i][0]!=-500&&coord[i][1]!=-500)
-			{	i++;
-				continue;
-			}
+        
             bool flag = false;
-            int x = rand() % (WIDTH - 2) + 1; // Random x coordinate
-            int y = rand() % (HEIGHT - 2) + 1; // Random y coordinate
-
-            // Check for specific conditions where pellets cannot be placed
+            int x = rand() % (WIDTH - 2) + 1;
+            int y = rand() % (HEIGHT - 2) + 1; 
             if (y == 11 && x >= 9 && x <= 13)
             {
                 flag = true;
@@ -650,18 +673,14 @@ public:
 
             if (!flag)
             {
-                // Calculate position for the circle based on maze cell size
                 float xPos = CELL_SIZE * x + CELL_SIZE / 2 - circle.getRadius();
                 float yPos = CELL_SIZE * (y + topSpace) + CELL_SIZE / 2 - circle.getRadius();
-
-                // Set circle position and store coordinates
                 circle.setPosition(xPos, yPos);
                 coord[i][0] = x;
                 coord[i][1] = y;
                 circles.push_back(circle);
                 i++;
             }
-        }
         std::cout << "\narray" << std::endl;
         for (int i = 0; i < total; i++)
         {
@@ -676,27 +695,39 @@ public:
             window.draw(circles[i]);
         }
     }
+void Eat(Pacman *pacman)
+{
+    
 
-    void Eat(Pacman *pacman)
-    {	//sem_wait(&full_slots);
-		//sem_wait(&mutex1);
+    for (int i = 0; i < total; i++)
+    {
+		
+        if (pacman->x == coord[i][0] && pacman->y == coord[i][1])
+        {	//sem_wait(&full_slots);
+    	//sem_wait(&mutex1);
+            score.update(10);
+            cout << "Power pellet eaten!" << endl;
 
-        for (int i = 0; i < 4; i++)
-        {
-            if (pacman->x == coord[i][0] && pacman->y == coord[i][1])
-            {
-                score.update(10);
-                circles[i].setPosition(-500, -500);
-                coord[i][0] = -500;
-                coord[i][1] = -500;
-				stop=1;
-				respawn=1;
-            }
+            // Erase the circle (power pellet)
+            circles[i].setPosition(-500, -500);
+            coord[i][0] = -500;
+            coord[i][1] = -500;
+
+            // Optionally set a flag to indicate that the pellet needs to respawn
+            respawn = true;
+			replace();
+            // Optionally perform additional actions upon eating a power pellet
+            // For example, stopping ghosts or any other game behavior
+
+            // Break the loop once a power pellet is eaten
+			// sem_post(&mutex1);
+   //sem_post(&empty_slots);
+            break;
+			
         }
-		//sem_post(&mutex1);
-		//sem_post(&empty_slots);
-
     }
+  
+}
 };
 
 class Dots
