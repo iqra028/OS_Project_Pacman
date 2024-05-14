@@ -608,127 +608,63 @@ public:
 			}
 		}
 	}
-};
-class PowerPellets
+};class PowerPellets
 {
 public:
-    std::vector<sf::CircleShape> circles;
+    sf::CircleShape circles;
     int x;
     int y;
     int total;
-    int **coord;
-    Score &score;
-	bool respawn=0;
+    int *coord;
+    bool respawn = false;
 
-    PowerPellets(Score &score) : score(score)
+    PowerPellets(int x1, int y1) 
     {
-        total = 5;
-        coord = new int *[total];
-        for (int i = 0; i < total; i++)
-        {
-            coord[i] = new int[2];
-        }
-		for(int i=0;i<total;i++)
-		{
-		coord[i][0]=-500;
-		coord[i][1]=-500;
-		}
-		 sf::CircleShape circle(15); 
-        circle.setFillColor(sf::Color::Yellow);
+        total = 4;
+        x = x1;
+        y = y1;
+
+        coord = new int[2];
+        float radius = 15.0f;
+        circles.setRadius(radius);
+        circles.setFillColor(sf::Color(255, 165, 0)); 
+        float xPos = CELL_SIZE * x + CELL_SIZE / 2 - circles.getGlobalBounds().width / 2;
+        float yPos = CELL_SIZE * (y + topSpace) + CELL_SIZE / 2 - circles.getGlobalBounds().height / 2;
+        circles.setPosition(xPos, yPos);
+        coord[0] = x;
+        coord[1] = y;
         
-		for (int i = 0; i < total; i++)
+    }
+    void Eat(Pacman* pacman)
+    {
+        for (int i = 0; i < 4; i++)
         {
-            circles.push_back(circle);
-			randomPlacement(circle,i);
+			//sem_wait(&full_slots);
+        //sem_wait(&mutex1);
+            if (pacman->x == coord[0] && pacman->y == coord[1])
+            {	cout<<"icamerhere"<<endl;
+				
+                circles.setPosition(-500, -500);
+                coord[0] = -500;
+                coord[1] = -500;
+                respawn = true;
+            }
+		//	sem_post(&mutex1);
+        //sem_post(&empty_slots);
         }
     }
-	void replace(){
-
-		//cout<<" i came here for replace ";
-	 //sem_wait(&empty_slots);
-     //sem_wait(&mutex1);
-		for(int i=0;i<total;i++)
-		if(coord[i][0]==-500&&coord[i][1]==-500){
-			randomPlacement(circles[i],i);
-		}
-		// sem_post(&mutex1);
-        //sem_post(&full_slots);
-
-		
-	}
-   void randomPlacement(sf::CircleShape &circle,int i)
-    {
-        
-            bool flag = false;
-            int x = rand() % (WIDTH - 2) + 1;
-            int y = rand() % (HEIGHT - 2) + 1; 
-            if (y == 11 && x >= 9 && x <= 13)
-            {
-                flag = true;
-            }
-            if (y == 10 && x == 11)
-            {
-                flag = true;
-            }
-
-            if (!flag)
-            {
-                float xPos = CELL_SIZE * x + CELL_SIZE / 2 - circle.getRadius();
-                float yPos = CELL_SIZE * (y + topSpace) + CELL_SIZE / 2 - circle.getRadius();
-                circle.setPosition(xPos, yPos);
-                coord[i][0] = x;
-                coord[i][1] = y;
-                circles.push_back(circle);
-                i++;
-            }
-        std::cout << "\narray" << std::endl;
-        for (int i = 0; i < total; i++)
-        {
-            std::cout << coord[i][0] << " " << coord[i][1] << std::endl;
-        }
+    void setPosition(int x, int y)
+    {	cout<<"hohoho"<<endl;
+        circles.setPosition(x*CELL_SIZE, y*CELL_SIZE);
+        //coord[0] = x;
+        //coord[1] = y;
     }
-
     void draw(sf::RenderWindow &window)
-    {
-        for (int i = 0; i < circles.size(); i++)
-        {
-            window.draw(circles[i]);
-        }
+    {	//cout<<x<<" "<<y<<endl;
+        window.draw(circles);
     }
-void Eat(Pacman *pacman)
-{
-    
-
-    for (int i = 0; i < total; i++)
-    {
-		
-        if (pacman->x == coord[i][0] && pacman->y == coord[i][1])
-        {	//sem_wait(&full_slots);
-    	//sem_wait(&mutex1);
-            score.update(10);
-            cout << "Power pellet eaten!" << endl;
-
-            // Erase the circle (power pellet)
-            circles[i].setPosition(-500, -500);
-            coord[i][0] = -500;
-            coord[i][1] = -500;
-
-            // Optionally set a flag to indicate that the pellet needs to respawn
-            respawn = true;
-			replace();
-            // Optionally perform additional actions upon eating a power pellet
-            // For example, stopping ghosts or any other game behavior
-
-            // Break the loop once a power pellet is eaten
-			// sem_post(&mutex1);
-   //sem_post(&empty_slots);
-            break;
-			
-        }
-    }
-  
-}
 };
+
 
 class Dots
 {

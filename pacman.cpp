@@ -10,7 +10,7 @@ sem_t reader;
 sem_t writer;
 int readercount=0;
 sem_t empty_slots, full_slots, mutex1;
-
+bool pallet[5]={1,1,1,1,0};
 bool stop=0;
 #include "header.h"
 const int total = 4;
@@ -24,17 +24,13 @@ bool exit_window = false;
 int score = 0;
 bool running = 1;
 
-struct arguments
-{
-	// Food food;
-	Pacman *pacman;
-	Dots * Dot;
-	PowerPellets* powerpallet;
-	arguments(Pacman *pac,Dots * dot,PowerPellets * f) : pacman(pac),Dot(dot),powerpallet(f)
-	{
-	}
+struct arguments {
+    Pacman *pacman;
+    Dots *Dot;
+    PowerPellets** powerpallet;
+    arguments(Pacman *pac, Dots *dot, PowerPellets** f) : pacman(pac), Dot(dot), powerpallet(f) {
+    }
 };
-
 void *userInterfaceThread(void *args)
 {
 	arguments *arg = *(arguments **)args;
@@ -45,7 +41,11 @@ void *userInterfaceThread(void *args)
 	while (true)
 	{
 		arg->Dot->collisionDots(arg->pacman);
-		arg->powerpallet->Eat(arg->pacman);
+		for(int i=0;i<4;i++)
+		{
+			arg->powerpallet[i]->Eat(arg->pacman);
+		}
+	//	arg->powerpallet->Eat(arg->pacman);
 	}
 	return nullptr;
 }
@@ -134,13 +134,30 @@ void *gameEngineThread(void *args)
 		Ghost("pacman-art/ghosts/pinky.png", 1.5f, 4,0.6)	// Delay of 1.5 seconds
 	};
 	Food food(score);
-	PowerPellets powerpallet(score);
+	const int numPellets = 4;
+	
+    PowerPellets pellets[numPellets] = {
+        PowerPellets( 14, 15),
+        PowerPellets( 13, 9),
+        PowerPellets(5, 8),
+        PowerPellets( 15, 21)
+    };
+
+	std::vector<std::vector<int>> coordinates = {
+        {14, 15},
+        {13, 9},
+        {5, 8},
+        {15, 21},
+		{13,15}
+    };
 	Dots Dot(pacman, ghosts, score);
 	// Main loop
 	Event event;
 	bool pressed = false;
 	// cout<<pacman.x<<" "<<pacman.y<<endl;
-	arguments *args1 = new arguments(&pacman,&Dot,&powerpallet);
+	PowerPellets* Pellets[4] = {&pellets[0], &pellets[1], &pellets[2], &pellets[3]}; 
+arguments *args1 = new arguments(&pacman, &Dot, Pellets);
+
 
 	pthread_create(&t[0], nullptr, userInterfaceThread, &args1);
 	int n[total];
@@ -192,17 +209,7 @@ void *gameEngineThread(void *args)
 			}
 			pacman.handleEvent(event);
 		}
-		if(powerpallet.respawn==1)
-		{	//sem_wait(&empty_slots);
-        	//sem_wait(&mutex1);
-			sf::CircleShape circle(15);
-			circle.setFillColor(sf::Color::Yellow);
-			powerpallet.randomPlacement(circle);
-			powerpallet.respawn=0;
-			//sem_post(&mutex1);
-        //sem_post(&full_slots);
-
-		}
+		
 		pacman.move_in_same_Direction();
 
 		// for (int i = 0; i < 4; i++)
@@ -240,7 +247,34 @@ void *gameEngineThread(void *args)
 
 		// Draw food
 		food.draw(window);
-		powerpallet.draw(window);
+		for(int i=0;i<4;i++){
+			      //  sem_wait(&empty_slots);
+        		//	sem_wait(&mutex1);
+		if(pellets[i].respawn==1)
+		{	
+			//pallet[i]=0;
+
+			for(int j=0;j<5;j++)
+			{	cout<<pallet[j]<<"hiii"<<endl;
+				if(j!=i && pallet[j]==0)
+				{	cout<<"icaaaaaaaaaaaaaaaaaaaaaaaaaaaa"<<i<<" "<<j<<" "<<coordinates[j][0]<<" "<< coordinates[j][1]<<endl;
+					
+					pellets[i].x=coordinates[j][0];
+					pellets[i].y=coordinates[j][1];
+					pallet[j]=1;
+					pallet[i]=0;
+					pellets[i].coord[0]=coordinates[j][0];
+					pellets[i].coord[1]=coordinates[j][1];
+					pellets[i].setPosition(coordinates[j][0],coordinates[j][1]);
+					pellets[i].respawn=false;
+					break;
+				}
+			}
+		}
+		sem_post(&mutex1);
+        sem_post(&full_slots);
+        pellets[i].draw(window);
+		}
 		// Display the window
 		window.display();
 	}
